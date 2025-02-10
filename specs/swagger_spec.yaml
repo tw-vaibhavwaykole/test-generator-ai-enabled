@@ -1,0 +1,177 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Sample API"
+  description: "A sample API to demonstrate a complete Swagger specification with multiple endpoints."
+host: "api.example.com"
+basePath: "/v1"
+schemes:
+  - "https"
+  - "http"
+paths:
+  /users:
+    get:
+      summary: "List all users"
+      description: "Retrieve a list of all users."
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "A list of users."
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/User"
+    post:
+      summary: "Create a new user"
+      description: "Add a new user to the system."
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "user"
+          description: "User object that needs to be added"
+          required: true
+          schema:
+            $ref: "#/definitions/UserInput"
+      responses:
+        201:
+          description: "User created successfully."
+          schema:
+            $ref: "#/definitions/User"
+  /users/{userId}:
+    get:
+      summary: "Retrieve a user"
+      description: "Get a user by their ID."
+      produces:
+        - "application/json"
+      parameters:
+        - name: "userId"
+          in: "path"
+          description: "ID of the user to retrieve"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "User details returned successfully."
+          schema:
+            $ref: "#/definitions/User"
+        404:
+          description: "User not found."
+    put:
+      summary: "Update a user"
+      description: "Update an existing user's information."
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "userId"
+          in: "path"
+          description: "ID of the user to update"
+          required: true
+          type: "string"
+        - in: "body"
+          name: "user"
+          description: "Updated user object"
+          required: true
+          schema:
+            $ref: "#/definitions/UserInput"
+      responses:
+        200:
+          description: "User updated successfully."
+          schema:
+            $ref: "#/definitions/User"
+        404:
+          description: "User not found."
+    delete:
+      summary: "Delete a user"
+      description: "Remove a user from the system."
+      parameters:
+        - name: "userId"
+          in: "path"
+          description: "ID of the user to delete"
+          required: true
+          type: "string"
+      responses:
+        204:
+          description: "User deleted successfully."
+        404:
+          description: "User not found."
+  /login:
+    post:
+      summary: "User login"
+      description: "Authenticate a user and return a token."
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "credentials"
+          description: "User login credentials"
+          required: true
+          schema:
+            $ref: "#/definitions/LoginInput"
+      responses:
+        200:
+          description: "Login successful."
+          schema:
+            $ref: "#/definitions/AuthToken"
+        401:
+          description: "Invalid username or password."
+definitions:
+  User:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        example: "12345"
+      username:
+        type: "string"
+        example: "johndoe"
+      email:
+        type: "string"
+        example: "johndoe@example.com"
+    required:
+      - id
+      - username
+      - email
+  UserInput:
+    type: "object"
+    properties:
+      username:
+        type: "string"
+        example: "johndoe"
+      email:
+        type: "string"
+        example: "johndoe@example.com"
+      password:
+        type: "string"
+        example: "securepassword"
+    required:
+      - username
+      - email
+      - password
+  LoginInput:
+    type: "object"
+    properties:
+      username:
+        type: "string"
+        example: "johndoe"
+      password:
+        type: "string"
+        example: "securepassword"
+    required:
+      - username
+      - password
+  AuthToken:
+    type: "object"
+    properties:
+      token:
+        type: "string"
+        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    required:
+      - token

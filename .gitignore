@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Virtual environment directories
+.venv/
+venv/
+env/
+
+# Environment variables file
+.env
+
+# PyCharm project settings
+.idea/
+
+# pipenv virtual environment file
+Pipfile.lock
+
+# Flask instance folder
+instance/
+
+# Test and coverage reports
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/

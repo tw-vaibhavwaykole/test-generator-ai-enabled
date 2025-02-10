@@ -1,0 +1,96 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Sample API"
+  description: "A sample API to demonstrate a complete Swagger specification with multiple endpoints."
+host: "api.example.com"
+basePath: "/v1"
+schemes:
+  - "https"
+  - "http"
+paths:
+  /users:
+    get:
+      summary: "List all users"
+      description: "Retrieve a list of all users."
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "A list of users."
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/User"
+    post:
+      summary: "Create a new user"
+      description: "Add a new user to the system."
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "user"
+          description: "User object that needs to be added"
+          required: true
+          schema:
+            $ref: "#/definitions/UserInput"
+      responses:
+        201:
+          description: "User created successfully."
+          schema:
+            $ref: "#/definitions/User"
+definitions:
+  User:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        example: "12345"
+      username:
+        type: "string"
+        example: "johndoe"
+      email:
+        type: "string"
+        example: "johndoe@example.com"
+    required:
+      - id
+      - username
+      - email
+  UserInput:
+    type: "object"
+    properties:
+      username:
+        type: "string"
+        example: "johndoe"
+      email:
+        type: "string"
+        example: "johndoe@example.com"
+      password:
+        type: "string"
+        example: "securepassword"
+    required:
+      - username
+      - email
+      - password
+  LoginInput:
+    type: "object"
+    properties:
+      username:
+        type: "string"
+        example: "johndoe"
+      password:
+        type: "string"
+        example: "securepassword"
+    required:
+      - username
+      - password
+  AuthToken:
+    type: "object"
+    properties:
+      token:
+        type: "string"
+        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    required:
+      - token
