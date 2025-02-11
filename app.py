@@ -121,7 +121,8 @@ RESULT_TEMPLATE = """
           <h4>Endpoint: {{ endpoint }}</h4>
         </div>
         <div class="card-body">
-          {% for method, scenario in methods.items() %}
+          {% for method, scenarios in methods.items() %}
+            {% for scenario in scenarios %}
             <div class="method-section">
               <h5>Method: {{ method }}</h5>
               <p><strong>Scenario:</strong> {{ scenario.test_scenario }}</p>
@@ -132,6 +133,7 @@ RESULT_TEMPLATE = """
                 {% endfor %}
               </ul>
             </div>
+            {% endfor %}
           {% endfor %}
         </div>
       </div>
@@ -165,19 +167,30 @@ def upload_spec():
                 api_spec = load_api_spec(Path(temp_path))
                 endpoints_list = endpoints(api_spec)
                 scenarios = generate_test_scenarios_for_all(endpoints_list)
-                # Group scenarios by endpoint (path).
+                # Regroup the scenarios by endpoint and HTTP method.
+                # Expected key format: "METHOD /endpoint"
                 grouped_endpoints = {}
-                for key, scenario in scenarios.items():
-                    # Expect key format: "METHOD path"
-                    if " " in key:
-                        method, path = key.split(" ", 1)
+                for key, scenario_list in scenarios.items():
+                    parts = key.split(" ", 1)
+                    if len(parts) == 2:
+                        method, endpoint = parts
                     else:
-                        method, path = "Other", key
-                    if path not in grouped_endpoints:
-                        grouped_endpoints[path] = {}
-                    grouped_endpoints[path][method] = scenario
+                        method = "Other"
+                        endpoint = key
+                    if endpoint not in grouped_endpoints:
+                        grouped_endpoints[endpoint] = {}
+                    if method not in grouped_endpoints[endpoint]:
+                        grouped_endpoints[endpoint][method] = []
+                    grouped_endpoints[endpoint][method].extend(scenario_list)
             except Exception as e:
-                grouped_endpoints = {"Error": {"error": {"test_scenario": f"Error generating scenarios: {str(e)}", "test_steps": []}}}
+                grouped_endpoints = {
+                    "Error": {
+                        "error": [{
+                            "test_scenario": f"Error generating scenarios: {str(e)}",
+                            "test_steps": []
+                        }]
+                    }
+                }
             finally:
                 os.remove(temp_path)
             return render_template_string(RESULT_TEMPLATE, grouped_endpoints=grouped_endpoints)

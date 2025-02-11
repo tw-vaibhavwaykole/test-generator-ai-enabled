@@ -5,7 +5,6 @@ generate_scenarios.py
 This script loads an OpenAPI specification using the parser defined in openapi_parser.py,
 extracts all endpoints, and then generates plain English API test scenarios for each endpoint
 using LangChain’s latest chaining style (using the pipe operator).
-
 """
 
 import json
@@ -14,20 +13,38 @@ from pathlib import Path
 from typing import Dict, List, Any
 from dotenv import load_dotenv
 from langchain_core.output_parsers import PydanticOutputParser
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, root_validator
+
 # Import the parser functions from your existing openapi_parser.py
 from openapi_parser import load_api_spec, endpoints
 
-# Import LangChain components following the latest patterns
-from langchain_community.llms import OpenAI
-from langchain.prompts import PromptTemplate
+# ---------------------------------------------------------------------------
+# Import LangChain components for chat-based models
+# ---------------------------------------------------------------------------
+from langchain.prompts.chat import ChatPromptTemplate, HumanMessagePromptTemplate
+from langchain_community.chat_models import ChatOpenAI
 
-
-# Define the Pydantic model for the test scenario.
+# Define the Pydantic model for a single test scenario.
 class TestScenario(BaseModel):
     test_scenario: str
     test_steps: List[str]
 
+# Define a container model that can accept either a single TestScenario or a list.
+class TestScenarioOutput(BaseModel):
+    scenarios: List[TestScenario]
+
+    @root_validator(pre=True)
+    def unwrap_input(cls, values: Any) -> Any:
+        # If the input is already a list, use it.
+        if isinstance(values, list):
+            if not values:
+                raise ValueError("Received an empty list; expected a valid object or non-empty list.")
+            return {"scenarios": values}
+        # If the input is a dict, wrap it in a list.
+        elif isinstance(values, dict):
+            return {"scenarios": [values]}
+        else:
+            raise ValueError("Invalid input type for TestScenarioOutput; expected a dict or list.")
 
 # -----------------------------------------------------------------------------
 # Configure Logging
@@ -35,27 +52,25 @@ class TestScenario(BaseModel):
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 # -----------------------------------------------------------------------------
 # Generate Test Scenarios Using LangChain Chaining Style
 # -----------------------------------------------------------------------------
-def generate_test_scenario_for_endpoint(endpoint: Dict[str, Any]) -> Dict[str, str]:
+def generate_test_scenario_for_endpoint(endpoint: Dict[str, Any]) -> List[dict]:
     """
     Generate a plain English API test scenario for a single endpoint.
 
     Uses LangChain's chaining style (pipe operator) to compose a prompt, query the LLM,
-    and then parse its output into a TestScenario object.
+    and then parse its output into one or more TestScenario objects.
 
     Args:
         endpoint (Dict[str, Any]): Dictionary with details of an endpoint.
 
     Returns:
-        Dict[str, str]: A dictionary representation of the TestScenario, with keys
-                        "test_scenario" and "test_steps".
+        List[dict]: A list of dictionaries, each representing a TestScenario.
     """
-    # Updated prompt template:
+    # Updated prompt template.
     prompt_template = (
-        "Generate plain English API test scenarios for the following endpoint details:\n\n"
+        "Generate plain English ONLY one API test scenario for the following endpoint details:\n\n"
         "Method: {method}\n"
         "Path: {path}\n"
         "Summary: {summary}\n"
@@ -65,28 +80,26 @@ def generate_test_scenario_for_endpoint(endpoint: Dict[str, Any]) -> Dict[str, s
         "Please output your answer as valid JSON in the following format:\n"
         "{{\n"
         '  "test_scenario": "<a plain English description>",\n'
-        '  "test_steps": "<a detailed list of test steps>"\n'
+        '  "test_steps": ["<a detailed list of test steps>"]\n'
         "}}\n"
     )
 
-    # Create the prompt template.
-    prompt = PromptTemplate(
-        input_variables=["method", "path", "summary", "description", "parameters", "responses"],
-        template=prompt_template
-    )
+    # Create a chat prompt template using the chat-based prompt components.
+    chat_prompt = ChatPromptTemplate.from_messages([
+        HumanMessagePromptTemplate.from_template(prompt_template)
+    ])
 
-    # Initialize the LLM (using OpenAI) with a low temperature for deterministic output.
-    llm = OpenAI(temperature=0)
+    # Initialize the chat-based LLM using ChatOpenAI with GPT-4o Mini.
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, max_tokens=1024)
 
-    # Initialize the output parser so that the JSON output is parsed into a TestScenario.
-    output_parser = PydanticOutputParser(pydantic_object=TestScenario)
+    # Initialize the output parser so that the JSON output is parsed into TestScenarioOutput.
+    output_parser = PydanticOutputParser(pydantic_object=TestScenarioOutput)
 
     # Chain the prompt, LLM, and output parser.
-    chain = prompt | llm | output_parser
+    chain = chat_prompt | llm | output_parser
 
     # Invoke the chain with endpoint details.
-    # Convert parameters and responses to JSON strings for clarity.
-    scenario_obj = chain.invoke({
+    scenario_output = chain.invoke({
         "method": endpoint.get("method", ""),
         "path": endpoint.get("path", ""),
         "summary": endpoint.get("summary", ""),
@@ -95,11 +108,10 @@ def generate_test_scenario_for_endpoint(endpoint: Dict[str, Any]) -> Dict[str, s
         "responses": json.dumps(endpoint.get("responses", []), indent=2)
     })
 
-    # Return the parsed TestScenario as a dictionary.
-    return scenario_obj.dict()
+    # Return the list of TestScenario dictionaries.
+    return [scenario.dict() for scenario in scenario_output.scenarios]
 
-
-def generate_test_scenarios_for_all(endpoints_list: List[Dict[str, Any]]) -> Dict[str, Dict[str, str]]:
+def generate_test_scenarios_for_all(endpoints_list: List[Dict[str, Any]]) -> Dict[str, List[dict]]:
     """
     Generate plain English test scenarios for all endpoints.
 
@@ -107,8 +119,8 @@ def generate_test_scenarios_for_all(endpoints_list: List[Dict[str, Any]]) -> Dic
         endpoints_list (List[Dict[str, Any]]): List of endpoint dictionaries.
 
     Returns:
-        Dict[str, Dict[str, str]]: A mapping from an endpoint identifier (e.g. "GET /pet/{petId}")
-                                   to its generated test scenario (as a dictionary).
+        Dict[str, List[dict]]: A mapping from an endpoint identifier (e.g. "GET /pet/{petId}")
+                               to its generated test scenarios (as a list of dictionaries).
     """
     scenarios = {}
     for endpoint in endpoints_list:
@@ -119,9 +131,8 @@ def generate_test_scenarios_for_all(endpoints_list: List[Dict[str, Any]]) -> Dic
             logger.info(f"Generated test scenario for endpoint: {key}")
         except Exception as e:
             logger.error(f"Failed to generate scenario for {key}", exc_info=True)
-            scenarios[key] = {"error": str(e)}
+            scenarios[key] = [{"error": str(e)}]
     return scenarios
-
 
 # -----------------------------------------------------------------------------
 # Main Execution
@@ -150,7 +161,6 @@ def main():
         print(json.dumps(test_scenarios, indent=4))
     except Exception as e:
         logger.error("Failed to generate test scenarios", exc_info=True)
-
 
 if __name__ == "__main__":
     main()

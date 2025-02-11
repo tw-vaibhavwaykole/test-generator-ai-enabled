@@ -1,0 +1,65 @@
+{
+    "GET /users": {
+        "test_scenario": "Verify that all users can be listed successfully.",
+        "test_steps": [
+            "Send a GET request to the /users endpoint.",
+            "Verify that the response status code is 200.",
+            "Verify that the response body contains a list of users."
+        ]
+    },
+    "POST /users": {
+        "test_scenario": "Create a new user successfully",
+        "test_steps": [
+            "Send a POST request to the /users endpoint",
+            "Include a valid user object in the request body",
+            "Verify that the request is successful with a status code of 201",
+            "Verify that the response contains a success message stating 'User created successfully'"
+        ]
+    },
+    "GET /users/{userId}": {
+        "test_scenario": "Retrieve a user by their ID",
+        "test_steps": [
+            "1. Send a GET request to the endpoint /users/{userId}",
+            "2. Replace {userId} with a valid user ID",
+            "3. Verify that the response status code is 200",
+            "4. Verify that the response body contains the user's details",
+            "5. Send a GET request to the endpoint /users/{userId} with an invalid user ID",
+            "6. Verify that the response status code is 404",
+            "7. Verify that the response body contains the message 'User not found.'"
+        ]
+    },
+    "PUT /users/{userId}": {
+        "test_scenario": "Update an existing user's information",
+        "test_steps": [
+            "1. Send a PUT request to the endpoint /users/{userId}",
+            "2. Include the userId in the path parameter",
+            "3. Include the updated user object in the body parameter",
+            "4. Verify that the userId is required and of type string",
+            "5. Verify that the user object is required",
+            "6. Verify that the request is successful and returns a status code of 200",
+            "7. Verify that the response description is 'User updated successfully.'",
+            "8. If the userId is not found, the request should return a status code of 404",
+            "9. Verify that the response description is 'User not found.'"
+        ]
+    },
+    "DELETE /users/{userId}": {
+        "test_scenario": "Delete a user from the system",
+        "test_steps": [
+            "Given a valid user ID",
+            "When the DELETE request is sent to the /users/{userId} endpoint",
+            "Then the user with the given ID should be removed from the system",
+            "And the response status code should be 204",
+            "And the response should contain the message 'User deleted successfully.'"
+        ]
+    },
+    "POST /login": {
+        "test_scenario": "User successfully logs in with valid credentials",
+        "test_steps": [
+            "1. Send a POST request to the /login endpoint",
+            "2. Include the user's login credentials in the request body",
+            "3. Verify that the response status code is 200",
+            "4. Verify that the response contains a token",
+            "5. Use the token to make subsequent requests on behalf of the user"
+        ]
+    }
+}

@@ -28,3 +28,7 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+.DS_Store
+
+#Output Test Generation
+output/generated_tests.py
