@@ -32,3 +32,5 @@ dist/
 
 #Output Test Generation
 output/generated_tests.py
+output/generated_tests_e2e.py
+

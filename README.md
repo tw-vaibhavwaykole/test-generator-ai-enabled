@@ -63,9 +63,14 @@ OPENAPI_KEY=your_openai_key
 4.**Running application**
 
 ```bash
-# Run the web application to generate scenarios
+# Run the web application to generate scenarios using OpenAPI specification.
  python app.py
 
-# Run the command line interface to generate scenarios and testcases
+# Run the command line interface to generate scenarios and testcases using OpenAPI specification.
  python generate_testcases.py 
+
+# Run the command line interface to generate e2e test code in Python 
+# using OpenAPI specification and scenarios.txt defined in plain english language.
+ python generate_testcases_e2e.py 
 ```
+

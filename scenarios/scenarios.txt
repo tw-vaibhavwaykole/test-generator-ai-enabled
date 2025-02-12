@@ -1,0 +1,19 @@
+Scenario: End-to-End Pet Adoption and Order Process
+
+1. User Account Creation:
+
+2. User Login:
+
+3. Adding a New Pet:
+
+4. Uploading a Pet Image:
+
+5. Finding Pets by Status:
+
+6. Placing an Order:
+
+7. Retrieving Order Details:
+
+8. User Logout:
+
+

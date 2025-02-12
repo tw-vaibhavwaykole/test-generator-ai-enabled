@@ -1,0 +1,40 @@
+
+Scenario: End-to-End Pet Adoption and Order Process
+
+1. User Account Creation:
+   - A new customer creates an account using the User API.
+   - The request includes details such as username, first name, last name, email, and password.
+   - Expected Outcome: A new user is successfully created and a confirmation message is returned.
+
+2. User Login:
+   - The newly created user logs into the system using the login endpoint.
+   - The request includes the username and password.
+   - Expected Outcome: The service returns a session token, indicating a successful login.
+
+3. Adding a New Pet:
+   - With the session token, the user adds a new pet via the Pet API.
+   - The pet object includes necessary details such as pet name, category (e.g., "dogs"), photo URLs, and status set to "available."
+   - Expected Outcome: The pet is added to the system and its pet ID is returned.
+
+4. Uploading a Pet Image:
+   - After adding the pet, the user uploads an image for the pet using the /pet/{petId}/uploadImage endpoint.
+   - The request includes the pet ID, optional additional metadata, and a file to upload.
+   - Expected Outcome: The service confirms the successful upload of the image for the given pet.
+
+5. Finding Pets by Status:
+   - The user searches for available pets using the /pet/findByStatus endpoint.
+   - The request passes "available" as the status filter.
+   - Expected Outcome: A list of pets with status "available" is returned, including the newly added pet.
+
+6. Placing an Order:
+   - The user decides to place an order for a pet accessory (or a related service) via the Store API.
+   - The order details include the pet ID, desired quantity, and a shipping date.
+   - Expected Outcome: The order is successfully placed, and an order ID is returned along with order details.
+
+7. Retrieving Order Details:
+   - Using the order ID, the user retrieves the details of the placed order via the /store/order/{orderId} endpoint.
+   - Expected Outcome: The service returns the complete order information (including order status and details) to confirm that the order was processed correctly.
+
+8. User Logout:
+   - Finally, the user logs out from the system using the /user/logout endpoint.
+   - Expected Outcome: The service confirms that the user has been successfully logged out.
