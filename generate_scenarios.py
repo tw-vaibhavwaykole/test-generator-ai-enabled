@@ -148,7 +148,7 @@ def main():
       - Print the resulting test scenarios in JSON format.
     """
     # Update this path as needed. The spec file can be in YAML or JSON.
-    spec_file_path = Path("specs/swagger_spec.yaml")
+    spec_file_path = Path("specs/dd_spec.yaml")
     try:
         # Load and validate the API spec.
         api_spec = load_api_spec(spec_file_path)

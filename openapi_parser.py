@@ -81,7 +81,7 @@ class Operation(BaseModel):
         return value
 
 class APISpec(BaseModel):
-    swagger: str
+    swagger: Optional[str] = None  #
     info: Info
     host: Optional[str] = None
     basePath: Optional[str] = None

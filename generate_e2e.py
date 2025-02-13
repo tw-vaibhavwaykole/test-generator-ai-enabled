@@ -5,6 +5,8 @@ from typing import List
 from dotenv import load_dotenv
 import logging
 
+from langchain_community.callbacks import get_openai_callback
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -126,6 +128,7 @@ logger.info("ChatOpenAI instance created.")
 # Note: The correct chain order is prompt first, then the LLM.
 chain = chat_prompt | llm
 
+
 def generate_test_code(swagger_files: List[str], scenario_text: str) -> str:
     """
     Generate Python test code given multiple swagger files and a scenario description.
@@ -133,10 +136,22 @@ def generate_test_code(swagger_files: List[str], scenario_text: str) -> str:
     Uses the pipe operator and explicit invocation to pass input data into the chain.
     """
     logger.info("Generating test code...")
+
+    # Combine and optionally summarize the swagger specs
     combined_spec = combine_and_maybe_summarize_specs(swagger_files, llm)
     input_data = {"combined_spec": combined_spec, "scenario": scenario_text}
-    generated_code = chain.invoke(input_data)
-    # Log the output of the invoke method and convert to a string if needed.
+
+    # Use the callback manager to track token usage for this invocation.
+    with get_openai_callback() as cb:
+        generated_code = chain.invoke(input_data)
+
+    # Log the token usage details
+    logger.info(f"Total Tokens: {cb.total_tokens}")
+    logger.info(f"Prompt Tokens: {cb.prompt_tokens}")
+    logger.info(f"Completion Tokens: {cb.completion_tokens}")
+    logger.info(f"Total Cost (USD): ${cb.total_cost}")
+
+    # If the generated output has a 'content' attribute, use that; otherwise use the raw output.
     if hasattr(generated_code, 'content'):
         logger.info("Summarization complete")
         generated_code = generated_code.content
@@ -149,10 +164,10 @@ def generate_test_code(swagger_files: List[str], scenario_text: str) -> str:
 if __name__ == "__main__":
     # Hard-coded file paths for Swagger specifications and the scenario file.
     swagger_files = [
-        "specs/petstore_spec.yaml"
+        "specs/dd_spec.yaml"
         # Add more swagger file paths here if needed.
     ]
-    scenario_file = "scenarios/scenarios.txt"
+    scenario_file = "scenarios/dd_scenarios.txt"
 
     # Read the scenario text from the file.
     with open(scenario_file, "r") as sf:
