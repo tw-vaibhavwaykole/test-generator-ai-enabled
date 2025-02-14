@@ -6,35 +6,35 @@ from dotenv import load_dotenv
 import logging
 
 from langchain_community.callbacks import get_openai_callback
+from langchain.prompts.chat import (
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+)
+from langchain_openai import ChatOpenAI
+from langchain_community.agent_toolkits.openapi.spec import reduce_openapi_spec
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# New chat prompt modules
-from langchain.prompts.chat import (
-    ChatPromptTemplate,
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate
-)
-# Import ChatOpenAI from the updated package.
-from langchain_openai import ChatOpenAI
-
-# Community utility to reduce an OpenAPI spec.
-from langchain_community.agent_toolkits.openapi.spec import reduce_openapi_spec
-
-# Load environment variables from .env file
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY is not set in the environment.")
 logger.info("Environment variables loaded successfully.")
 
+
 def load_swagger_spec(file_path: str) -> dict:
+    """Load the Swagger/OpenAPI specification from a YAML or JSON file.
+
+    Args:
+        file_path (str): Path to the specification file.
+
+    Returns:
+        dict: Loaded Swagger/OpenAPI specification.
     """
-    Load the Swagger/OpenAPI specification from a YAML or JSON file.
-    """
-    logger.info(f"Loading specification from {file_path}")
+    logger.info("Loading specification from %s", file_path)
     with open(file_path, "r") as f:
         if file_path.endswith((".yaml", ".yml")):
             spec = yaml.safe_load(f)
@@ -44,11 +44,17 @@ def load_swagger_spec(file_path: str) -> dict:
             raise ValueError("Unsupported file format. Use YAML or JSON.")
     return spec
 
+
 def load_and_reduce_spec(file_path: str) -> str:
-    """
-    Load a swagger spec and reduce it to its key components.
-    If the spec is in Swagger 2.0 format (without "servers"), add a default "servers" field.
-    Returns the reduced spec as a YAML string.
+    """Load a Swagger spec and reduce it to key components.
+
+    If the spec is in Swagger 2.0 format (without 'servers'), a default field is added.
+
+    Args:
+        file_path (str): Path to the Swagger/OpenAPI specification file.
+
+    Returns:
+        str: Reduced spec as a YAML string.
     """
     spec = load_swagger_spec(file_path)
     if "servers" not in spec:
@@ -62,125 +68,127 @@ def load_and_reduce_spec(file_path: str) -> str:
     reduced = reduce_openapi_spec(spec)
     return yaml.dump(reduced, sort_keys=False)
 
-def combine_and_maybe_summarize_specs(file_paths: List[str], llm: ChatOpenAI, token_limit: int = 3000) -> str:
-    """
-    Given a list of swagger file paths, load and reduce each one,
-    then combine them into a single string. If the combined text exceeds
-    an approximate token limit, summarize it using a chain.
+
+def combine_and_maybe_summarize_specs(
+    file_paths: List[str], llm: ChatOpenAI, token_limit: int = 3000
+) -> str:
+    """Combine and optionally summarize reduced Swagger specifications.
+
+    Args:
+        file_paths (List[str]): List of Swagger spec file paths.
+        llm (ChatOpenAI): Chat model instance.
+        token_limit (int, optional): Token threshold for summarization. Defaults to 3000.
+
+    Returns:
+        str: Combined (or summarized) Swagger specification.
     """
     logger.info("Combining specifications from files.")
     specs = [load_and_reduce_spec(path) for path in file_paths]
     combined_spec = "\n".join(specs)
-    # Rough heuristic: assume ~4 characters per token.
-    if len(combined_spec) > token_limit * 4:
-        logger.info("Combined spec is too long; summarizing...")
-        summary_prompt_template = (
-            "You are an expert in API documentation summarization. "
-            "The text below is a concatenation of reduced Swagger/OpenAPI specifications. "
-            "Summarize the key endpoints, required parameters, and response structures concisely. "
-            "Only output the concise summary.\n\nText:\n{text}"
-        )
-        summary_chat_prompt = ChatPromptTemplate.from_messages([
-            SystemMessagePromptTemplate.from_template("You are an expert summarizer for API documentation."),
-            HumanMessagePromptTemplate.from_template(summary_prompt_template)
-        ])
-        # Create the summary chain using the pipe operator and invoke it.
-        summary_chain = llm | summary_chat_prompt
-        summary_input = summary_chat_prompt.format(text=combined_spec)
-        summarized = summary_chain.invoke(summary_input)
-        # Log the output of the invoke method and convert to string if needed.
-        if hasattr(summarized, 'content'):
-            summarized_content = summarized.content
-        else:
-            summarized_content = str(summarized)  # Ensure it's a string
-        logger.info("Summarization complete. Output:\n%s", json.dumps(summarized_content, indent=4, ensure_ascii=False))
-    else:
-        logger.info("No summarization needed for combined spec.")
+    # if len(combined_spec) > token_limit * 4:
+    #     logger.info("Combined spec is too long; summarizing...")
+    #     summary_prompt_template = (
+    #         "You are an expert in API documentation summarization. "
+    #         "The text below is a concatenation of reduced Swagger/OpenAPI specifications. "
+    #         "Summarize the key endpoints, required parameters, and response structures concisely. "
+    #         "Only output the concise summary.\n\nText:\n{text}"
+    #     )
+    #     summary_chat_prompt = ChatPromptTemplate.from_messages([
+    #         SystemMessagePromptTemplate.from_template(
+    #             "You are an expert summarizer for API documentation."
+    #         ),
+    #         HumanMessagePromptTemplate.from_template(summary_prompt_template),
+    #     ])
+    #     summary_chain = llm | summary_chat_prompt
+    #     summary_input = summary_chat_prompt.format(text=combined_spec)
+    #     summarized = summary_chain.invoke(summary_input)
+    #     if hasattr(summarized, "content"):
+    #         summarized_content = summarized.content
+    #     else:
+    #         summarized_content = str(summarized)
+    #     logger.info("Summarization complete.")
+    #     combined_spec = summarized_content
+    # else:
+    #     logger.info("No summarization needed for combined spec.")
     return combined_spec
 
-# Define a chat prompt for generating the test code.
+
+# Define the chat prompt template with a test data placeholder.
 chat_prompt = ChatPromptTemplate.from_messages([
     SystemMessagePromptTemplate.from_template(
         "You are an expert test automation engineer who generates end-to-end API test code in Python."
     ),
     HumanMessagePromptTemplate.from_template(
-        "Using the following combined API specification and scenario description, generate complete, runnable Python code for an end-to-end test.\n\n"
+        "Using the following combined API specification, scenario description, and test data, generate complete, runnable Python code for an end-to-end test.\n\n"
         "Requirements:\n"
         "  - Organize the code into functions (one per API call).\n"
         "  - Use the 'requests' library to perform API calls.\n"
-        "  - Include proper assertions and error handling for the tests generated.\n"
+        "  - Add proper assertions for all important steps of the testcase.\n"
         "  - Output the complete Python function code without any Markdown formatting.\n"
         "  - Ensure that the generated code is complete and does not end abruptly or with partial tokens.\n"
         "  - Follow best practices for modularity and readability.\n"
-        "  - Fetch endpoints, methods, parameters from the spec.\n" 
-        "  - Generate testdata as per the schema.\n"
-        "  - Ensure to add Google style documentation but keep it minimal.\n\n"
+        "  - Fetch endpoints, methods, and parameters from the spec.\n"
+        "  - Generate test data as per the schema provided in the spec.\n"
+        "  - Include minimal Google style documentation.\n\n"
         "Combined API Specification:\n{combined_spec}\n\n"
-        "Scenario Description:\n{scenario}\n"
+        "Scenario Description:\n{scenario}\n\n"
+        "Test Data:\n{test_data}\n"
     )
 ])
 
-# Create a ChatOpenAI instance with the API key.
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, max_tokens=2048)
 logger.info("ChatOpenAI instance created.")
 
-# Create the main chain using the pipe operator.
-# Note: The correct chain order is prompt first, then the LLM.
 chain = chat_prompt | llm
 
 
-def generate_test_code(swagger_files: List[str], scenario_text: str) -> str:
-    """
-    Generate Python test code given multiple swagger files and a scenario description.
-    The swagger files are reduced and combined (and summarized if needed) to fit within token limits.
-    Uses the pipe operator and explicit invocation to pass input data into the chain.
+def generate_test_code(
+    swagger_files: List[str], scenario_text: str, test_data: str
+) -> str:
+    """Generate Python test code from Swagger specs, a scenario, and test data.
+
+    Args:
+        swagger_files (List[str]): List of Swagger spec file paths.
+        scenario_text (str): The scenario description.
+        test_data (str): Test data in JSON string format.
+
+    Returns:
+        str: Generated Python test code.
     """
     logger.info("Generating test code...")
-
-    # Combine and optionally summarize the swagger specs
     combined_spec = combine_and_maybe_summarize_specs(swagger_files, llm)
-    input_data = {"combined_spec": combined_spec, "scenario": scenario_text}
-
-    # Use the callback manager to track token usage for this invocation.
+    input_data = {
+        "combined_spec": combined_spec,
+        "scenario": scenario_text,
+        "test_data": test_data,
+    }
     with get_openai_callback() as cb:
         generated_code = chain.invoke(input_data)
-
-    # Log the token usage details
-    logger.info(f"Total Tokens: {cb.total_tokens}")
-    logger.info(f"Prompt Tokens: {cb.prompt_tokens}")
-    logger.info(f"Completion Tokens: {cb.completion_tokens}")
-    logger.info(f"Total Cost (USD): ${cb.total_cost}")
-
-    # If the generated output has a 'content' attribute, use that; otherwise use the raw output.
-    if hasattr(generated_code, 'content'):
-        logger.info("Summarization complete")
+    logger.info("Total Tokens: %s", cb.total_tokens)
+    logger.info("Prompt Tokens: %s", cb.prompt_tokens)
+    logger.info("Completion Tokens: %s", cb.completion_tokens)
+    logger.info("Total Cost (USD): $%s", cb.total_cost)
+    if hasattr(generated_code, "content"):
         generated_code = generated_code.content
-    else:
-        logger.info("Summarization complete")
-
     logger.info("Test code generation complete.")
     return generated_code
 
+
 if __name__ == "__main__":
-    # Hard-coded file paths for Swagger specifications and the scenario file.
     swagger_files = [
         "specs/dd_spec.yaml"
-        # Add more swagger file paths here if needed.
     ]
     scenario_file = "scenarios/dd_scenarios.txt"
-
-    # Read the scenario text from the file.
     with open(scenario_file, "r") as sf:
-        scenario_text = sf.read()
-    logger.info(f"Scenario file {scenario_file} loaded.")
-
-    # Generate the test code.
-    test_code = generate_test_code(swagger_files, scenario_text)
-
-    # Output the generated code to /output/generated_tests_e2e.py
+        scenario_yaml = yaml.safe_load(sf)
+    scenario_text = scenario_yaml.get("scenario", "")
+    test_data = scenario_yaml.get("test_data", {})
+    logger.info("Scenario file %s loaded.", scenario_file)
+    test_data_str = json.dumps(test_data, indent=2)
+    test_code = generate_test_code(swagger_files, scenario_text, test_data_str)
     output_file = "output/generated_tests_e2e.py"
     os.makedirs("output", exist_ok=True)
     with open(output_file, "w") as outf:
         outf.write(test_code)
-    logger.info(f"Generated Python Test Code has been saved to: {output_file}")
+    logger.info("Generated Python Test Code has been saved to: %s", output_file)
     print("Generated Python Test Code has been saved to:", output_file)
