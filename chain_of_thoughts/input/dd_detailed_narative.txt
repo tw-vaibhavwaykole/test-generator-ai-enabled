@@ -1,0 +1,7 @@
+For our design delivery flow, set the base URL to "https://api.example.com" and use JSON as the content type.
+ First, create a new decision delivery request by sending a POST to "/decision/delivery"
+ with test data including delivery type "express" and scheduled time "2025-03-15T10:00:00Z".
+ The system should return a "correlation_id".
+ Next, use this "correlation_id" to post a follow-up request to "/decision/delivery/update" with instructions
+ such as "change delivery to morning slot". Finally, perform a PATCH request to "/decision/delivery"
+ to update the delivery status to "dispatched", including headers like "X-Custom-Header: Update" and test data such as a tracking number "TRK123456789".

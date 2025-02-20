@@ -31,12 +31,15 @@ dist/
 .DS_Store
 
 #Output Test Generation
-output/generated_tests.py
-output/generated_tests_e2e.py
+langchain_learnings/output/generated_tests.py
+langchain_learnings/output/generated_tests_e2e.py
 
 #Input specs,scenarios and sample outputs
-specs/dd_spec.yaml
-scenarios/dd_scenarios.txt
-mock/dd_test_scenarios.json
+langchain_learnings/spec/dd_spec.yaml
+langchain_learnings/scenarios/dd_scenarios.txt
+langchain_learnings/mock/dd_test_scenarios.json
+
+.vscode
+
 
 

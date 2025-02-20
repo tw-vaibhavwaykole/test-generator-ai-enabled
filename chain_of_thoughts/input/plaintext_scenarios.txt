@@ -1,0 +1,53 @@
+# Scenario: Test Decision Delivery flow
+
+baseurl = "https://decision-delivery-internal.stage.ideasrms.com"
+clientCode = "client1234"
+propertyCode = "property123"
+
+Step1:
+  - Create a decision delivery POST request with endpoint /api/v1/decisiondelivery/requests/{clientCode}/{propertyCode}.
+    Payload is: {
+      "decisionUploadType": "FULL",
+      "decisionType": "Approval",
+      "clientEnvironmentUrl": "https://abc.com",
+      "vendorId": "1234"
+    }
+  - Get the response and verify that the status is 200.
+  - Store the correlation id from the response (e.g., response.content.get("correlationId")).
+
+Step2:
+  - Post daily bars using endpoint POST /api/v1/decisiondelivery/dailybars/${clientCode}/${propertyCode}/${correlationId}
+   Payload is: {
+           [{
+          "occupancyDate": "2020-11-20",
+          "rateCode": "BAR",
+          "currencyCode": "USD",
+          "roomTypeCode": "NSK",
+          "singleRate": 100,
+          "doubleRate": 120,
+          "additionalAdultRate": 30,
+          "additionalChildRate": 30,
+          "taxExcluded": true
+        }, {
+          "occupancyDate": "2020-11-21",
+          "rateCode": "BAR",
+          "currencyCode": "USD",
+          "roomTypeCode": "NSK",
+          "singleRate": 100,
+          "doubleRate": 120,
+          "additionalAdultRate": 30,
+          "additionalChildRate": 30,
+          "taxExcluded": true
+        }]
+        }
+   - verify the status response to 200
+
+Step3:
+  - PATCH the decision delivery request using endpoint '/api/v1/decisiondelivery/requests/${clientCode}/${propCode}/${correlationId}'
+  - Verify the status as 204
+
+Step4:
+  - GET the decision delivery status using endpoint '/api/v1/decisiondelivery/requests/${clientCode}/${propCode}/${correlationId}'
+  - fetch the requestStatus from the response json and print the status.
+
+

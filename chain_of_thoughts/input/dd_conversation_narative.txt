@@ -1,0 +1,6 @@
+Imagine a design delivery process where a customer initiates a delivery request on our platform.
+The customer provides details like the delivery type ("express") and a desired schedule ("2025-03-15T10:00:00Z").
+The system then generates a unique correlation ID for the request.
+Later, the customer uses this correlation ID to update the request with additional instructions, such as changing the delivery to a morning slot.
+Finally, the customer makes a final PATCH call to update the status to "dispatched", including any required headers and tracking information.
+

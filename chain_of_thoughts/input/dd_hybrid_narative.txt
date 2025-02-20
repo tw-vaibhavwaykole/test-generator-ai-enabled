@@ -1,0 +1,22 @@
+Scenario: Design Delivery Flow
+Global Variables: Base URL "https://api.example.com", Default Headers "Content-Type: application/json", "Authorization: Bearer <token>"
+
+Step 1:
+  Action: Create a decision delivery request
+  Method: POST
+  Endpoint: "/api/v1/decisiondelivery/dailybars/{clientCode}/{propertyCode}/{correlationId}"
+  Test Data: (delivery type: "standard", scheduled time: "2025-04-01T12:00:00Z")
+  Expected Response: "correlation_id"
+
+Step 2:
+  Action: Send a follow-up update
+  Method: POST
+  Endpoint: "/decision/delivery/update"
+  Instructions: "reroute to pickup point"
+
+Step 3:
+  Action: Update delivery status
+  Method: PATCH
+  Endpoint: "/decision/delivery"
+  Headers: (X-Update-Mode: "urgent")
+  Test Data: (tracking number: "TRK987654321")

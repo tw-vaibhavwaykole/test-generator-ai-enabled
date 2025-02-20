@@ -34,7 +34,7 @@ from langchain_community.chat_models import  ChatOpenAI
 from langchain.prompts.chat import ChatPromptTemplate, HumanMessagePromptTemplate
 
 # Import the API spec loader and endpoint extractor.
-from openapi_parser import load_api_spec, endpoints
+from langchain_learnings.openapi_parser import load_api_spec, endpoints
 # Import the scenario generator that uses LLM chaining (from your generate_scenarios.py).
 from generate_scenarios import generate_test_scenarios_for_all
 

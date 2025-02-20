@@ -39,13 +39,13 @@ simple web UI built with Flask.
    
    # Install pipenv
    pip install pipenv
-   
-   # Install dependencies from pipfile   
-   pipenv install --dev
-   
+        
   # Activate the pipenv shell
    pipenv shell
    
+   # Install dependencies from pipfile   
+   pipenv install -r requirements.txt
+  
   # To deactivate the virtual environment
    deactivate   
    ```

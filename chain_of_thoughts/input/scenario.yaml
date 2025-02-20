@@ -1,0 +1,32 @@
+test_name: "SetupDecisionDeliveryRequestTest"
+description: "Dynamic values for setting up a Decision Delivery Request with partial payload override, optional header, optional path parameter overrides, and global query parameters."
+
+# Optional global override for base URL; if left empty, the spec's base URL is used.
+base_url_override: ""
+
+# Optional global path parameter overrides; if not provided, defaults from the spec will be used.
+global_path_params_override: {}
+
+# Global variables override for any payload, header, query, or path parameter values that should be applied across all steps.
+global_variables_override:
+  clientEnvironmentUrl: "https://abc.com"
+
+# Global headers override (applied to all steps if provided)
+global_headers_override:
+  Authorization: "Bearer GLOBAL_TOKEN"
+
+# Global query parameters override (applied to all steps if provided)
+global_query_parameters_override:
+  locale: "en-US"
+
+steps:
+  - service: "DecisionDelivery"
+    endpoint: "/api/v1/decisiondelivery/requests/{clientCode}/{propertyCode}"
+    path_params_override:
+      clientCode: "CLIENT123"
+      propertyCode: "PROP456"
+    payload_override:
+      decisionUploadType: "FULL"
+      decisionType: "Approval"
+    headers_override: {}
+    query_params_override: {}

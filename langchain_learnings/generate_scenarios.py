@@ -16,7 +16,7 @@ from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, root_validator
 
 # Import the parser functions from your existing openapi_parser.py
-from openapi_parser import load_api_spec, endpoints
+from langchain_learnings.openapi_parser import load_api_spec, endpoints
 
 # ---------------------------------------------------------------------------
 # Import LangChain components for chat-based models

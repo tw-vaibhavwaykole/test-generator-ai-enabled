@@ -221,7 +221,7 @@ def main():
     test scenarios in plain English.
     """
     # Update this path as needed
-    spec_file_path = Path("specs/swagger_spec.yaml")  # Can be YAML or JSON
+    spec_file_path = Path("spec/swagger_spec.yaml")  # Can be YAML or JSON
     try:
         api_spec = load_api_spec(spec_file_path)
         api_details = extract_api_details(api_spec)
