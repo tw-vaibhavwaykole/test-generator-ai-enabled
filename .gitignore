@@ -41,5 +41,10 @@ langchain_learnings/mock/dd_test_scenarios.json
 
 .vscode
 
+chain_of_thoughts/output/plaintext_generated_test_code.py
+chain_of_thoughts/output/plaintext_validated_test_code.py
+
+
+
 
 
