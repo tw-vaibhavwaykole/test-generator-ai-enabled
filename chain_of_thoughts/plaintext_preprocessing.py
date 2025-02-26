@@ -1,10 +1,8 @@
-import asyncio
 import logging
 from dotenv import load_dotenv
 from langchain_community.callbacks import get_openai_callback
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
-
 # Configure logging to show INFO-level messages and above
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -13,10 +11,10 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Initialize ChatOpenAI
-chat_openai = ChatOpenAI(model="gpt-4o-mini")
+chat_openai = ChatOpenAI(model="gpt-4o-mini", temperature=0.4)
 
 
-async def run_chain(template_str: str, input_vars: dict, escape_keys: list = None) -> str:
+def run_chain(template_str: str, input_vars: dict, escape_keys: list = None) -> str:
     """
     Helper method to run a prompt chain with the given template and input variables.
     Optionally escapes curly braces for specified keys.
@@ -39,17 +37,18 @@ async def run_chain(template_str: str, input_vars: dict, escape_keys: list = Non
     def sync_invoke():
         with get_openai_callback() as cb:
             result = chain.invoke(input_vars)
-            logger.info("Token usage details:")
-            logger.info(f"  Total Tokens: {cb.total_tokens}")
-            logger.info(f"  Prompt Tokens: {cb.prompt_tokens}")
-            logger.info(f"  Completion Tokens: {cb.completion_tokens}")
-            logger.info(f"  Total Cost (USD): ${cb.total_cost:.5f}")
+            logger.debug("Token usage details:")
+            logger.debug("  Total Tokens: %s", cb.total_tokens)
+            logger.debug("  Prompt Tokens: %s", cb.prompt_tokens)
+            logger.debug("  Completion Tokens: %s", cb.completion_tokens)
+            logger.debug("  Total Cost (USD): $%.5f", cb.total_cost)
         return result.content
 
-    return await asyncio.to_thread(sync_invoke)
+    # Invoke synchronously
+    return sync_invoke()
 
 
-async def extract_globals(scenario: str) -> str:
+def extract_globals(scenario: str) -> str:
     """
     Extracts all global variables (key-value pairs) from the scenario text in JSON or key-value format.
 
@@ -64,11 +63,12 @@ async def extract_globals(scenario: str) -> str:
         "Return only the key-value pairs in JSON format.\n\n"
         "Scenario:\n{scenario}"
     )
-    result = await run_chain(template_str, {"scenario": scenario}, escape_keys=["scenario"])
+    logger.info("Extracting global variables from the scenario text...")
+    result = run_chain(template_str, {"scenario": scenario}, escape_keys=["scenario"])
     return result
 
 
-async def extract_steps(scenario: str) -> str:
+def extract_steps(scenario: str) -> str:
     """
     Extracts all test steps (including any provided test data) from the scenario text.
     The output should be a numbered list of steps.
@@ -86,11 +86,12 @@ async def extract_steps(scenario: str) -> str:
         "Return the steps as a numbered list and ensure that all scenarios are covered.\n"
         "Scenario:\n{scenario}"
     )
-    result = await run_chain(template_str, {"scenario": scenario}, escape_keys=["scenario"])
+    logger.info("Extracting test steps from the scenario text...")
+    result = run_chain(template_str, {"scenario": scenario}, escape_keys=["scenario"])
     return result
 
 
-async def merge_globals_and_steps(globals_text: str, steps_text: str) -> str:
+def merge_globals_and_steps(globals_text: str, steps_text: str) -> str:
     """
     Merges the global variables and test steps into a single refined scenario.
 
@@ -107,11 +108,12 @@ async def merge_globals_and_steps(globals_text: str, steps_text: str) -> str:
         "Global Variables:\n{globals_text}\n\n"
         "Test Steps:\n{steps_text}"
     )
-    result = await run_chain(template_str, {"globals_text": globals_text, "steps_text": steps_text})
+    logger.info("Merging global variables and test steps...")
+    result = run_chain(template_str, {"globals_text": globals_text, "steps_text": steps_text})
     return result
 
 
-async def get_refined_scenario(scenario: str) -> str:
+def get_refined_scenario(scenario: str) -> str:
     """
     Processes the raw scenario text to extract global variables and test steps, then merges them
     into a refined scenario.
@@ -123,30 +125,32 @@ async def get_refined_scenario(scenario: str) -> str:
         str: Refined scenario text.
     """
     try:
-        logger.info("<<<Reading Scenarios....(in-progress)")
-        globals_text = await extract_globals(scenario)
+        logger.debug("<<<Reading Scenarios....(in-progress)")
+        globals_text = extract_globals(scenario)
         logger.debug("Extracted Global Variables:\n%s", globals_text)
-        steps_text = await extract_steps(scenario)
+        steps_text = extract_steps(scenario)
         logger.debug("Extracted Test Steps:\n%s", steps_text)
-        refined_scenario = await merge_globals_and_steps(globals_text, steps_text)
-        logger.info("<<<Merged Refined Scenario:\n%s", refined_scenario)
+        refined_scenario = merge_globals_and_steps(globals_text, steps_text)
+        logger.debug("<<<Merged Refined Scenario:\n%s", refined_scenario)
         return refined_scenario
     except Exception as e:
         logger.error("An error occurred during scenario processing: %s", e)
         raise
 
 
-async def main():
+def main():
     try:
         # Read the scenario from file
         with open("./input/plaintext_scenarios.txt", "r") as f:
             scenario = f.read()
 
         # Get the refined scenario by processing the raw scenario text
-        refined_scenario = await get_refined_scenario(scenario)
+        refined_scenario = get_refined_scenario(scenario)
+        print("Refined Scenario:")
+        print(refined_scenario)
     except Exception as e:
         logger.error("An error occurred in main: %s", e)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

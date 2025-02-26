@@ -9,8 +9,7 @@ Step1:
     Payload is: {
       "decisionUploadType": "FULL",
       "decisionType": "Approval",
-      "clientEnvironmentUrl": "https://abc.com",
-      "vendorId": "1234"
+      "clientEnvironmentUrl": "https://abc.com"
     }
   - Get the response and verify that the status is 200.
   - Store the correlation id from the response (e.g., response.content.get("correlationId")).
