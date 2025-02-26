@@ -1,16 +1,21 @@
 # Scenario: Test Decision Delivery flow
 
-baseurl = "https://decision-delivery-internal.stage.ideasrms.com"
-clientCode = "client1234"
-propertyCode = "property123"
+baseurl = "https://decision-delivery-internal.dev.ideasrms.com"
+clientCode = "BSTN"
+propertyCode = "LONME"
 
 Step1:
   - Create a decision delivery POST request with endpoint /api/v1/decisiondelivery/requests/{clientCode}/{propertyCode}.
     Payload is: {
-      "decisionUploadType": "FULL",
-      "decisionType": "Approval",
-      "clientEnvironmentUrl": "https://abc.com"
-    }
+    "vendorId": "vendor_alla",
+    "clientEnvironmentUrl": "",
+    "clientEnvironmentName": null,
+    "clientEnvironmentId": null,
+    "decisionUploadType": "FULL",
+    "decisionType": "DAILY_BAR",
+     "destinationType": "HTNG",
+    "requestStatus": "NOT_STARTED"
+}
   - Get the response and verify that the status is 200.
   - Store the correlation id from the response (e.g., response.content.get("correlationId")).
 

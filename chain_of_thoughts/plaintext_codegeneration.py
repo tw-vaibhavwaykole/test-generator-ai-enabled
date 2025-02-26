@@ -141,7 +141,7 @@ def main():
         logger.debug("<<<Validated and improved the generated test code.\n")
 
         # Step 5: Write the improved test code to a file.
-        output_file = "./output/plaintext_generated_test_code.py"
+        output_file = "./output/plaintext_generated_test.py"
         with open(output_file, "w") as f:
             f.write(improved_test_code)
         logger.info("Test code has been saved to %s", output_file)
