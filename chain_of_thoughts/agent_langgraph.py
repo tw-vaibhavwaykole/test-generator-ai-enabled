@@ -21,6 +21,7 @@ class AgentState(TypedDict):
     plain_scenarios: Annotated[str, "Raw scenario input"]
     preprocessing_output: Annotated[str, "Refined scenario output"]
     code_generation_output: Annotated[str, "Improved test code output"]
+    execution_output: Annotated[str, "Test execution output"]
 
 # Import the compiled subgraphs
 from preprocessing_subgraph import build_preprocessing_subgraph
@@ -39,13 +40,30 @@ def code_generation_composite_node(state: AgentState) -> dict:
     result = code_generation_graph.invoke({"preprocessing_output": state["preprocessing_output"]})
     return {"code_generation_output": result["code_generation_output"]}
 
+from plaintext_codeexecution import execute_tests
+def code_execution_composite_node(state: AgentState) -> dict:
+    """
+    Executes the generated test code by invoking the execute_tests function
+    from the code_execution module and captures its output.
+    """
+    try:
+        logger.info("Executing generated test code via code_execution module.")
+        execution_output = execute_tests()
+        return {"execution_output": execution_output}
+    except Exception as e:
+        error_msg = f"Error during test execution: {e}"
+        logger.error(error_msg)
+        return {"execution_output": error_msg}
+
 # Build the parent graph
 parent_builder = StateGraph(AgentState, output=AgentState)
 parent_builder.add_node("preprocessing", preprocessing_composite_node)
 parent_builder.add_node("code_generation", code_generation_composite_node)
+parent_builder.add_node("code_execution", code_execution_composite_node)
 parent_builder.add_edge(START, "preprocessing")
 parent_builder.add_edge("preprocessing", "code_generation")
-parent_builder.add_edge("code_generation", END)
+parent_builder.add_edge("code_generation", "code_execution")
+parent_builder.add_edge("code_execution", END)
 agent_graph = parent_builder.compile()
 
 # Visualize the graph
